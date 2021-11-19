@@ -1,35 +1,29 @@
+import argparse
 import numpy as np
 import cv2 as cv
+import usm
+import os
 
-img = cv.imread(r'5/3.jpg')
+parser = argparse.ArgumentParser()
+parser.add_argument("-m", "--method", type=str, help="Choice your method", default='usm')
+args = parser.parse_args()
+print(args.method)
+path = '5/32.jpg'
+img = cv.imread(path)
 
-blur = cv.GaussianBlur(img, (0, 0), 5)
-usm = cv.addWeighted(img, 1.5, blur, -0.5, 0)
-usm = cv.cvtColor(usm, cv.COLOR_BGR2GRAY)
-equalize_img = cv.equalizeHist(usm)
-
-clahe = cv.createCLAHE()
-clahe_img = clahe.apply(usm)
-
-binary = cv.adaptiveThreshold(equalize_img, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 11, 2)
-
-se = cv.getStructuringElement(cv.MORPH_RECT, (1, 1))
-se = cv.morphologyEx(se, cv.MORPH_OPEN, (2, 2))
-mask = cv.dilate(binary, se)
-
-mask1 = cv.bitwise_not(mask)
-binary = cv.bitwise_and(usm, mask)
-result = cv.add(binary, mask1)
+if args.method == 'usm':
+    result = usm.usm(img, 9)
+elif args.method == 'usm+eq':
+    result = usm.usm(img, 9)
+    result = usm.eq(result)
+elif args.method == 'eq':
+    img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    result = usm.eq(img)
 
 
 
-
-############
-# cv.imshow('org', img)
-# cv.imshow('eq', equalize_img)
-# cv.imshow('cl', clahe_img)
-cv.imshow('usm', usm)
-# cv.imshow('binary', binary)
-# cv.imshow('result',result)
+cv.imshow('usm', result)
 cv.waitKey(0)
 cv.destroyAllWindows()
+
+cv.imwrite(os.path.join("test", path), result)
